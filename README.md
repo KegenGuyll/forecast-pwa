@@ -1,6 +1,6 @@
 # forecast
 
-> Will display a 7 day forecast
+> Will display a current forecast
 
 ## Build Setup
 
