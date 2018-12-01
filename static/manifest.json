@@ -1,0 +1,20 @@
+{
+  "name": "forecast",
+  "short_name": "forecast",
+  "icons": [
+    {
+      "src": "/static/img/icons/icons8-sun-480.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/icons/icons8-sun-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#263238",
+  "theme_color": "#263238"
+}
