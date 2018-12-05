@@ -1,6 +1,6 @@
 {
-  "name": "forecast",
-  "short_name": "forecast",
+  "name": "Forecast",
+  "short_name": "Forecast",
   "icons": [
     {
       "src": "/static/img/icons/icons8-sun-480.png",
