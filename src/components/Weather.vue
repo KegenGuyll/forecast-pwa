@@ -5,23 +5,24 @@
     </div>
     <div class="row center">
       <div class="col s12 m6 offset-m3">
-        <div class="card blue-grey darken-3" style="margin-top: 15vh;" v-if="weatherData.name">
+        <div class="card blue-grey darken-3" style="margin-top: 15vh;" v-if="CurrentLocation.name">
           <div class="card-content white-text">
             <span class="card-title">
-                Weather in {{weatherData.name}} 
+                Weather in {{CurrentLocation.name}} 
             </span>
-              <span v-for="weather in weatherData.weather" v-bind:key="weather.main">
+              <span v-for="weather in CurrentLocation.weather" v-bind:key="weather.main">
                 <img v-bind:src="'https://openweathermap.org/img/w/' + weather.icon + '.png'" style="height:60px; width:60px;" />
                 <p>{{weather.description}}</p>
               </span>
           </div>
           <div class="card-action color-text orange">
-          <span>Current temp. {{temp_fahrenheit}}F°</span>
+          <span>Current temp. {{temp_fahrenheit[0]}}F°</span>
         </div>
         </div>
       </div>
       <div class="col s12 m6 offset-m3">
-        <div class="card blue-grey darken-3" style="margin-top: 15vh;" v-for="weather in addWeatherData" v-bind:key="weather.name" v-if="weather.name">
+        <div class="card blue-grey darken-3" style="margin-top: 15vh;" v-for="(weather,index) in addWeatherData" v-bind:key="weather.name" v-if="weather.name">
+          <i v-on:click="close(index,addWeatherData)" class="material-icons right orange-text">close</i>
           <div class="card-content white-text">
             <span class="card-title">
                 Weather in {{weather.name}} 
@@ -32,7 +33,7 @@
               </span>
           </div>
           <div class="card-action color-text orange">
-          <span>Current temp. {{temp_fahrenheit}}F°</span>
+          <span>Current temp. {{temp_fahrenheit[index+1]}}F°</span>
         </div>
         </div>
       </div>
@@ -54,7 +55,7 @@ export default {
     return {
         isLoading: true,
         fullPage: true,
-        weatherData : [],
+        CurrentLocation : [],
         location : {},
         temp_fahrenheit: [],
         temp_max_fahrenheit : '',
@@ -73,9 +74,9 @@ export default {
       .then(() => {
           axios.get("https://api.openweathermap.org/data/2.5/weather?lat=" + this.location.lat + "&lon=" + this.location.lng + "&APPID=" + apiKey + "")
             .then(response =>  {
-                this.weatherData = response.data
+                this.CurrentLocation = response.data
                 this.isLoading = false
-                this.convertTemp(this.weatherData.main.temp)
+                this.convertTemp(this.CurrentLocation.main.temp)
             })
             .catch(e => {
               console.error(e);
@@ -92,17 +93,17 @@ export default {
           // this.temp_min_fahrenheit = Math.floor((temp_min - 273.15) * 9/5 + 32)
       },
       addWeather(){
-        console.log('active')
         axios.get("https://api.openweathermap.org/data/2.5/weather?q=" + this.CityName + "&APPID=" + apiKey)
         .then(response => {
+          response.data.main.temp = this.convertTemp(response.data.main.temp);
           this.addWeatherData.push(response.data)
-          this.addWeatherData.forEach(function(details){
-           console.log(details.main.temp)
-          })
         })
         .catch(e => {
           console.error(e)
         })
+      },
+      close(addWeatherData,index){
+        this.addWeatherData.splice(index, 1)
       }
   }
 }
