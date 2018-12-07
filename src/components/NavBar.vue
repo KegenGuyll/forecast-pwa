@@ -5,7 +5,7 @@
       <div class="nav-wrapper black">
         <div class="row">
           <div class="input-field col s6">
-            <input v-model="CityName" id="first_name2" type="text" class="validate">
+            <input v-model="CityName" id="first_name2" type="text" class="validate" style="padding-left:10px" @keyup.enter="search">
           </div>
           <i class="large material-icons" v-on:click="search">add</i>
         </div>
