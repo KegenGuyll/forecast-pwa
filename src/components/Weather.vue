@@ -4,7 +4,7 @@
       <loading :active.sync="isLoading" :is-full-page="fullPage"></loading>
     </div>
     <div class="row center">
-      <div class="col s12 m3 offset-m5">
+      <div class="col s12 m6 offset-m3">
         <div class="card blue-grey darken-3" style="margin-top: 15vh;" v-if="CurrentLocation.name">
           <div class="card-content white-text">
             <span class="card-title">Weather in {{CurrentLocation.name}}</span>
@@ -134,9 +134,14 @@ export default {
     },
     bookmark(weather) {
       weather.bookmarked = true
+      this.$forceUpdate();
     },
     unbookmark(weather){
       weather.bookmarked = false
+      this.$forceUpdate();
+    },
+    login(){
+      console.log('login')
     }
   }
 };
@@ -149,20 +154,5 @@ export default {
 
 .card {
   border-radius: 10px;
-}
-
-/* This is for documentation purposes and will not be needed in your application */
-#create .v-speed-dial {
-  position: absolute;
-}
-
-#create .v-btn--floating {
-  position: relative;
-}
-
-.centered {
-  position: fixed;
-  /* bring your own prefixes */
-  transform: translate(-50%, -60%);
 }
 </style>
