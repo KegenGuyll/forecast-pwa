@@ -37,7 +37,7 @@
                 v-bind:src="'https://openweathermap.org/img/w/' + weather.icon + '.png'"
                 style="height:60px; width:60px;"
               >
-              <p>{{weather.bookmarked}}</p>
+              <p>{{weather.description}}</p>
             </span>
           </div>
           <div class="card-action color-text orange">
@@ -50,13 +50,18 @@
 </template>
 
 <script>
+import db from '../firebaseInit'
+import firebase from 'firebase'
 import axios from "axios";
 import Loading from "vue-loading-overlay";
 import "vue-loading-overlay/dist/vue-loading.css";
 const apiKey = "4d3e3b1b0437ed374e4b41c906b0da10";
 export default {
   name: "weather",
-  props: ["CityName"],
+  props: [
+    "CityName",
+    "isLoggedIn"
+  ],
   data() {
     return {
       isLoading: true,
@@ -71,8 +76,8 @@ export default {
   },
   created() {
     this.$getLocation({
-      enableHighAccuracy: true //defaults to false
-    })
+        enableHighAccuracy: true //defaults to false
+      })
       .then(coordinates => {
         this.location = coordinates;
         console.log(coordinates);
@@ -81,17 +86,26 @@ export default {
         axios
           .get(
             "https://api.openweathermap.org/data/2.5/weather?lat=" +
-              this.location.lat +
-              "&lon=" +
-              this.location.lng +
-              "&APPID=" +
-              apiKey +
-              ""
+            this.location.lat +
+            "&lon=" +
+            this.location.lng +
+            "&APPID=" +
+            apiKey +
+            ""
           )
           .then(response => {
+            const user = firebase.auth().currentUser;
+            const uid = user.uid
             this.CurrentLocation = response.data;
             this.isLoading = false;
             this.convertTemp(this.CurrentLocation.main.temp);
+            db.collection(uid).get()
+            .then(querySnapshot => {
+                querySnapshot.forEach(doc => {
+                console.log(doc.data().CityName)
+                this.pulledData(doc.data().CityName)
+              })
+            })
           })
           .catch(e => {
             console.error(e);
@@ -102,7 +116,7 @@ export default {
     Loading
   },
   watch: {
-    
+
   },
   methods: {
     convertTemp(k) {
@@ -114,14 +128,16 @@ export default {
       axios
         .get(
           "https://api.openweathermap.org/data/2.5/weather?q=" +
-            this.CityName +
-            "&APPID=" +
-            apiKey
+          this.CityName +
+          "&APPID=" +
+          apiKey
         )
         .then(response => {
           response.data.main.temp = this.convertTemp(response.data.main.temp);
-          var index =  this.addWeatherData.push(response.data) - 1
-          var bookmarked = {bookmarked : false}
+          var index = this.addWeatherData.push(response.data) - 1
+          var bookmarked = {
+            bookmarked: false
+          }
           Object.assign(this.addWeatherData[index], bookmarked)
         })
         .catch(e => {
@@ -130,18 +146,45 @@ export default {
     },
     close(addWeatherData, index) {
       index -= index
-      this.addWeatherData.splice(index,1);
+      this.addWeatherData.splice(index, 1);
     },
     bookmark(weather) {
+      const user = firebase.auth().currentUser;
+      const uid = user.uid
       weather.bookmarked = true
       this.$forceUpdate();
+      db.collection(uid).add({
+        CityName: weather.name
+      })
     },
-    unbookmark(weather){
+    unbookmark(weather) {
+      const user = firebase.auth().currentUser;
+      const uid = user.uid
       weather.bookmarked = false
       this.$forceUpdate();
+      db.collection(uid).where('CityName', '==', weather.name).get()
+        .then(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            doc.ref.delete();
+          })
+        })
     },
-    login(){
+    login() {
       console.log('login')
+    },
+    pulledData(CityName){
+      axios.get("https://api.openweathermap.org/data/2.5/weather?q=" + CityName + "&APPID=" + apiKey)
+      .then(response => {
+          response.data.main.temp = this.convertTemp(response.data.main.temp);
+          var index = this.addWeatherData.push(response.data) - 1
+          var bookmarked = {
+            bookmarked: true
+          }
+          Object.assign(this.addWeatherData[index], bookmarked)
+        })
+        .catch(e => {
+          console.error(e);
+        });
     }
   }
 };

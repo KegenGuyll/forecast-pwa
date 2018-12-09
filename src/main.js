@@ -7,6 +7,7 @@ import './plugins/vuetify'
 import App from './App'
 import router from './router'
 import VueGeolocation from 'vue-browser-geolocation';
+import firebase from 'firebase';
 
 
 
@@ -18,9 +19,12 @@ Vue.config.productionTip = false
 
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#app',
-  router,
-  template: '<App/>',
-  components: { App }
+let app;
+firebase.auth().onAuthStateChanged(user => {
+  if(!app){
+    app = new Vue({
+      router,
+      render: h => h(App)
+    }).$mount('#app')
+  }
 })

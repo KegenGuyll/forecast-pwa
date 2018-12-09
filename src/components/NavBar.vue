@@ -1,56 +1,59 @@
 <template>
 <div>
-    <div class="navbar-fixed">
     <nav>
       <div class="nav-wrapper black">
         <ul class="left">
-          <li><input v-model="CityName" id="first_name2" type="text"  style="padding-left:10px;width: 500px;" @keyup.enter="search"></li>
+          <li><input v-model="CityName" id="first_name2" type="text"  style="padding-left:10px;width: 50vw;" @keyup.enter="search"></li>
           <li><i class="large material-icons" v-on:click="search" style="padding-left: 10px;">add</i></li>
         </ul>
         <ul class="right">
-            <li v-if="!isLoggedIn" v-on:click="login"><router-link to=''>Login</router-link></li>
-            <li v-if="!isLoggedIn" v-on:click="register"><router-link to=''>Register</router-link></li>
-            <li v-if="isLoggedIn"><span id="logout" v-on:click="logout">Logout</span></li>
+            <li v-if="isLoggedIn" style="padding-right:25px"><span id="logout" v-on:click="logout">Logout</span></li>
           </ul>
       </div>
     </nav>
-    <weather :CityName="CityName" ref="search"></weather>
-  </div>
+    <weather :CityName="CityName" :isLoggedIn="isLoggedIn" ref="search"></weather>
 </div>
 </template>
 
 <script>
+import '../firebaseInit.js'
+import firebase from 'firebase';
 import Weather from './Weather.vue';
 export default {
   name: 'NavBar',
   data() {
     return {
       CityName: '',
+      isLoggedIn: false,
+      currentUser: false
     }
   },
   components : {
-    Weather: Weather
+    Weather: Weather,
+  },
+  created(){
+    if(firebase.auth().currentUser){
+      this.isLoggedIn = true;
+      this.currentUser = firebase.auth().currentUser.email;
+    }
   },
   methods : {
 
     search(){
       this.$refs.search.addWeather();
+      this.CityName = '';
     },
-    login(){
-      this.$refs.login.login();
-    },
-    // register(){
-    //   this.$refs.register.addWeather();
-    // },
-    // register(){
-    //   this.$refs.logout.addWeather();
-    // }
-
+    logout: function() {
+      firebase.auth().signOut().then(() => {
+        this.$router.go({path: this.$router.path})
+      })
+    }
+    
   }
 }
 </script>
 
-<style>
+<style scoped>
 i{
   cursor: pointer;
 }
