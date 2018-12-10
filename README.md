@@ -2,11 +2,13 @@
 
 > Will display a current forecast
 
+
 ## Build Setup
 
 ``` bash
 # install dependencies
 npm install
+You'll also need a firebaseCongfig.js file, based off a firebase store database
 
 # serve with hot reload at localhost:8080
 npm run dev
