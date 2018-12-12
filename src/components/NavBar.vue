@@ -40,7 +40,7 @@ export default {
   methods : {
 
     search(){
-      this.$refs.search.addWeather();
+      this.$refs.search.search();
       this.CityName = '';
     },
     logout: function() {

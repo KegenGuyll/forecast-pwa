@@ -3,16 +3,32 @@
     <div class="vld-parent">
       <loading :active.sync="isLoading" :is-full-page="fullPage"></loading>
     </div>
+    <div class="row">
+      <div class="col s12 m3" v-for="weather in searchWeatherData.list" v-bind:key="weather.id">
+        <div class="card horizontal" v-for="details in weather.weather" v-bind:key="details" >
+          <div class="card-image" style="padding-left: 2vw;padding-top: 17px;">
+            <img v-bind:src="'https://openweathermap.org/img/w/' + details.icon + '.png'" style="height:60px; width:60px;">
+            <span><strong>{{details.description}}</strong></span>
+          </div>
+          <div class="card-stacked">
+            <div class="card-content">
+              <ul>
+                <li><span class="card-title" style="cursor: pointer;" v-on:click="addWeather(weather.id)" >Weather in {{weather.name}} <img :active="convertflag(weather.sys.country)" v-bind:src="'https://openweathermap.org/images/flags/' + flagicon + '.png'"></span></li>
+                <li><div class="chip" style="color: rgb(255, 255, 255);background-color: #999999;">{{weather.main.temp_min}}K°</div><div class="chip" style="color: rgb(255, 255, 255);background-color: #FF9800;">{{weather.main.temp_max}}K°</div></li>
+              </ul>
+              <span v-on:click="directions(weather.coord.lat,weather.coord.lon)" style="color:#FF9800;cursor: pointer;"> [{{weather.coord.lat}},{{weather.coord.lon}}]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="row center">
       <div class="col s12 m6 offset-m3">
         <div class="card blue-grey darken-3" style="margin-top: 15vh;" v-if="CurrentLocation.name">
           <div class="card-content white-text">
             <span class="card-title">Weather in {{CurrentLocation.name}}</span>
             <span v-for="weather in CurrentLocation.weather" v-bind:key="weather.main">
-              <img
-                v-bind:src="'https://openweathermap.org/img/w/' + weather.icon + '.png'"
-                style="height:60px; width:60px;"
-              >
+              <img v-bind:src="'https://openweathermap.org/img/w/' + weather.icon + '.png'" style="height:60px; width:60px;">
               <p>{{weather.description}}</p>
             </span>
           </div>
@@ -21,22 +37,19 @@
           </div>
         </div>
       </div>
-      </div>
-      <div class="row center">
-        <div class="col s12 m4"   v-for="(weather,index) in addWeatherData" v-bind:key="weather.name" v-if="weather.name">
-        <div  class="card blue-grey darken-3" style="margin-top: 15vh;" >
-          <i v-on:click="close(index,addWeatherData)" class="material-icons right orange-text">close</i> 
-          <div v-if="!weather.bookmarked" v-on:click="bookmark(weather)" >
+    </div>
+    <div class="row center">
+      <div class="col s12 m4" v-for="(weather,index) in addWeatherData" v-bind:key="weather.name" v-if="weather.name">
+        <div class="card blue-grey darken-3" style="margin-top: 15vh;">
+          <i v-on:click="close(index,addWeatherData)" class="material-icons right orange-text">close</i>
+          <div v-if="!weather.bookmarked" v-on:click="bookmark(weather)">
             <i class="material-icons left orange-text">bookmark_border</i>
           </div>
           <i v-else v-on:click="unbookmark(weather)" class="material-icons left orange-text">bookmark</i>
           <div class="card-content white-text">
             <span class="card-title">Weather in {{weather.name}}</span>
             <span v-for="weather in weather.weather" v-bind:key="weather.main">
-              <img
-                v-bind:src="'https://openweathermap.org/img/w/' + weather.icon + '.png'"
-                style="height:60px; width:60px;"
-              >
+              <img v-bind:src="'https://openweathermap.org/img/w/' + weather.icon + '.png'" style="height:60px; width:60px;">
               <p>{{weather.description}}</p>
             </span>
           </div>
@@ -45,7 +58,7 @@
           </div>
         </div>
       </div>
-      </div>
+    </div>
   </div>
 </template>
 
@@ -71,7 +84,9 @@ export default {
       temp_fahrenheit: [],
       temp_max_fahrenheit: "",
       temp_min_fahrenheit: "",
-      addWeatherData: []
+      addWeatherData: [],
+      searchWeatherData: [],
+      flagicon: ''
     };
   },
   created() {
@@ -80,7 +95,6 @@ export default {
       })
       .then(coordinates => {
         this.location = coordinates;
-        console.log(coordinates);
       })
       .then(() => {
         axios
@@ -90,8 +104,7 @@ export default {
             "&lon=" +
             this.location.lng +
             "&APPID=" +
-            apiKey +
-            ""
+            apiKey
           )
           .then(response => {
             const user = firebase.auth().currentUser;
@@ -102,8 +115,7 @@ export default {
             db.collection(uid).get()
             .then(querySnapshot => {
                 querySnapshot.forEach(doc => {
-                console.log(doc.data().CityName)
-                this.pulledData(doc.data().CityName)
+                this.pulledData(doc.data().CityId)
               })
             })
           })
@@ -115,25 +127,29 @@ export default {
   components: {
     Loading
   },
-  watch: {
-
-  },
   methods: {
     convertTemp(k) {
       this.temp_fahrenheit.push(Math.floor(((k - 273.15) * 9) / 5 + 32));
       // this.temp_max_fahrenheit = Math.floor((temp_max - 273.15) * 9/5 + 32)
       // this.temp_min_fahrenheit = Math.floor((temp_min - 273.15) * 9/5 + 32)
     },
-    addWeather() {
+    search(){
+      axios.get("https://api.openweathermap.org/data/2.5/find?q=" + this.CityName + "&type=accurate&mode=json&APPID=" + apiKey)
+      .then(response => {
+        this.searchWeatherData = response.data
+      })
+    },
+    addWeather(id) {
       axios
         .get(
-          "https://api.openweathermap.org/data/2.5/weather?q=" +
-          this.CityName +
+          "https://api.openweathermap.org/data/2.5/weather?id=" +
+          id +
           "&APPID=" +
           apiKey
         )
         .then(response => {
           response.data.main.temp = this.convertTemp(response.data.main.temp);
+          this.searchWeatherData = '';
           var index = this.addWeatherData.push(response.data) - 1
           var bookmarked = {
             bookmarked: false
@@ -145,7 +161,6 @@ export default {
         });
     },
     close(addWeatherData, index) {
-      index -= index
       this.addWeatherData.splice(index, 1);
     },
     bookmark(weather) {
@@ -154,7 +169,7 @@ export default {
       weather.bookmarked = true
       this.$forceUpdate();
       db.collection(uid).add({
-        CityName: weather.name
+        CityId: weather.id
       })
     },
     unbookmark(weather) {
@@ -162,18 +177,15 @@ export default {
       const uid = user.uid
       weather.bookmarked = false
       this.$forceUpdate();
-      db.collection(uid).where('CityName', '==', weather.name).get()
+      db.collection(uid).where('CityId', '==', weather.id).get()
         .then(querySnapshot => {
           querySnapshot.forEach(doc => {
             doc.ref.delete();
           })
         })
     },
-    login() {
-      console.log('login')
-    },
-    pulledData(CityName){
-      axios.get("https://api.openweathermap.org/data/2.5/weather?q=" + CityName + "&APPID=" + apiKey)
+    pulledData(CityId){
+      axios.get("https://api.openweathermap.org/data/2.5/weather?id=" + CityId + "&APPID=" + apiKey)
       .then(response => {
           response.data.main.temp = this.convertTemp(response.data.main.temp);
           var index = this.addWeatherData.push(response.data) - 1
@@ -185,7 +197,15 @@ export default {
         .catch(e => {
           console.error(e);
         });
-    }
+    },
+    convertflag(flag){
+      var str = flag
+      var res = str.toLowerCase();
+      this.flagicon = res
+    },
+  directions(lat,lon){
+    window.open('https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lon)
+  }
   }
 };
 </script>
@@ -197,5 +217,13 @@ export default {
 
 .card {
   border-radius: 10px;
+}
+
+i{
+  cursor: pointer;
+}
+.chip{
+  color: rgb(255, 255, 255);
+  background-color: #999999;
 }
 </style>
